@@ -19,6 +19,49 @@
       justify-content: center; min-height: 100vh;
       font-family: 'Nunito', sans-serif; overflow: hidden; user-select: none;
     }
+
+    /* ── ROTATE OVERLAY (portrait phones) ── */
+    #rotate-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(160deg,#1a1a2e,#16213e);
+      flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+    }
+    .rotate-icon { font-size: 4.5rem; animation: rotateHint 1.4s ease-in-out infinite; }
+    @keyframes rotateHint {
+      0%,100% { transform: rotate(-20deg); }
+      50%      { transform: rotate(20deg); }
+    }
+    .rotate-title {
+      font-family: 'Fredoka One', cursive; font-size: 1.7rem;
+      color: var(--banana); text-shadow: 2px 2px 0 var(--accent);
+      text-align: center; padding: 0 28px;
+    }
+    .rotate-sub {
+      font-family: 'Nunito', sans-serif; font-size: 0.92rem;
+      color: rgba(255,255,255,0.5); text-align: center; padding: 0 36px; line-height: 1.5;
+    }
+
+    /* Show overlay in portrait on small/medium phones */
+    @media (max-width: 767px) and (orientation: portrait) {
+      #rotate-overlay { display: flex; }
+      #game-wrapper   { display: none; }
+    }
+
+    /* Scale the whole game down on small landscape screens */
+    @media (max-height: 480px) and (orientation: landscape) {
+      #game-wrapper { transform: scale(0.68); transform-origin: top center; gap: 4px; margin-top: -20px; }
+      #title { font-size: 1.4rem; }
+      .hud-item { font-size: 0.9rem; padding: 3px 10px; min-width: 75px; }
+      #collectible-legend { font-size: 0.6rem; gap: 8px; }
+      #controls-hint { font-size: 0.6rem; }
+    }
+    @media (max-height: 600px) and (min-height: 481px) and (orientation: landscape) {
+      #game-wrapper { transform: scale(0.82); transform-origin: top center; gap: 6px; }
+      #title { font-size: 1.9rem; }
+      .hud-item { font-size: 1.1rem; padding: 4px 14px; min-width: 95px; }
+    }
+
     #game-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 
     #title {
@@ -172,6 +215,14 @@
   </style>
 </head>
 <body>
+
+<!-- Portrait mode blocker -->
+<div id="rotate-overlay">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-title">Rotate Your Phone! 🔄</div>
+  <div class="rotate-sub">Makad Hopping needs landscape mode to play.<br>Turn your phone sideways to continue! 🐒</div>
+</div>
+
 <div id="game-wrapper">
   <div id="title">🐒 Makad Hopping!</div>
 
@@ -291,7 +342,7 @@
   ];
   const DUKKAR_MSGS = [
     '🐷 Booo Gets Bigger!',
-    '🏃‍♂️‍➡️ Dukkar padhala!',
+    '📚 Dukkar padhala!',
     '🤣 Gudi Gudi Gudi!',
   ];
 
