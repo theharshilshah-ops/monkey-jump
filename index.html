@@ -104,52 +104,71 @@
     /* ── WIN OVERLAY ── */
     #win-overlay {
       display: none; position: absolute; inset: 0;
-      background: linear-gradient(160deg,rgba(10,0,30,0.96),rgba(60,0,40,0.96));
-      z-index: 50; flex-direction: column; align-items: center; justify-content: center;
-      gap: 10px; border-radius: 20px; animation: fadeIn 0.6s ease; overflow-y: auto; padding: 20px 0;
+      background: linear-gradient(160deg,rgba(10,0,30,0.97),rgba(60,0,40,0.97));
+      z-index: 50; flex-direction: column; align-items: center; justify-content: flex-start;
+      border-radius: 20px; animation: fadeIn 0.6s ease; overflow: hidden;
+      padding: 18px 20px 14px;
     }
     #win-overlay.show { display: flex; }
     @keyframes fadeIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
 
+    /* Top title bar */
+    #win-top {
+      text-align: center; margin-bottom: 12px; flex-shrink: 0;
+    }
+    #win-title-text {
+      font-family: 'Fredoka One', cursive; font-size: 1.55rem;
+      color: var(--banana); text-shadow: 2px 2px 0 var(--accent), 0 0 20px rgba(255,214,0,0.5);
+      display: block;
+    }
+    #win-score-display {
+      font-family: 'Fredoka One', cursive; font-size: 1rem;
+      color: rgba(255,255,255,0.6); margin-top: 2px; display: block;
+    }
+
+    /* Body: image left, messages right */
+    #win-body {
+      display: flex; flex-direction: row; align-items: flex-start;
+      gap: 18px; flex: 1; width: 100%; min-height: 0;
+    }
+
+    /* Left: image */
+    #win-img-col {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px; flex-shrink: 0;
+    }
     #win-img-wrap {
-      width: 160px; height: 160px; border-radius: 50%; overflow: hidden;
-      border: 4px solid var(--banana); box-shadow: 0 0 40px rgba(255,214,0,0.6);
-      animation: pulse 1.5s ease-in-out infinite; flex-shrink: 0;
+      width: 190px; height: 210px; border-radius: 16px; overflow: hidden;
+      border: 3px solid var(--banana); box-shadow: 0 0 30px rgba(255,214,0,0.55);
+      animation: pulse 1.8s ease-in-out infinite;
     }
     #win-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
     @keyframes pulse {
-      0%,100%{box-shadow:0 0 20px rgba(255,214,0,0.5)}
-      50%{box-shadow:0 0 60px rgba(255,214,0,0.95)}
+      0%,100%{box-shadow:0 0 18px rgba(255,214,0,0.45)}
+      50%{box-shadow:0 0 50px rgba(255,214,0,0.9)}
     }
-
-    #win-title-text {
-      font-family: 'Fredoka One', cursive; font-size: 1.6rem;
-      color: var(--banana); text-shadow: 2px 2px 0 var(--accent);
-      text-align: center; padding: 0 20px;
-    }
-    #win-score-display {
-      font-family: 'Fredoka One', cursive; font-size: 2rem;
-      color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
-    }
-    #win-messages {
-      display: flex; flex-direction: column; gap: 5px;
-      max-width: 360px; padding: 0 20px; text-align: center;
-    }
-    .win-msg-line {
-      font-family: 'Nunito', sans-serif; font-size: 0.82rem;
-      color: rgba(255,220,240,0.88); line-height: 1.4;
-      padding: 3px 0; border-bottom: 1px solid rgba(255,214,0,0.1);
-    }
-    .win-msg-line:last-child { border-bottom: none; }
-
     #play-again-btn {
       background: var(--banana); color: #1a1a2e; border: none;
-      border-radius: 14px; padding: 12px 36px;
-      font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+      border-radius: 12px; padding: 9px 22px;
+      font-family: 'Fredoka One', cursive; font-size: 0.95rem;
       cursor: pointer; transition: all 0.2s;
-      box-shadow: 0 4px 15px rgba(255,214,0,0.4); margin-top: 6px;
+      box-shadow: 0 4px 15px rgba(255,214,0,0.4); white-space: nowrap;
     }
-    #play-again-btn:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(255,214,0,0.6); }
+    #play-again-btn:hover { transform: scale(1.05); box-shadow: 0 6px 22px rgba(255,214,0,0.65); }
+
+    /* Right: messages */
+    #win-messages {
+      display: flex; flex-direction: column; gap: 0;
+      flex: 1; overflow-y: auto; align-self: stretch;
+    }
+    .win-msg-line {
+      font-family: 'Nunito', sans-serif; font-size: 0.8rem;
+      color: rgba(255,220,240,0.9); line-height: 1.45;
+      padding: 5px 0 5px 0;
+      border-bottom: 1px solid rgba(255,214,0,0.1);
+    }
+    .win-msg-line:last-child { border-bottom: none; }
+    .win-msg-line .emoji { margin-right: 4px; }
   </style>
 </head>
 <body>
@@ -176,24 +195,36 @@
 
     <!-- Win overlay -->
     <div id="win-overlay">
-      <div id="win-img-wrap">
-        <img id="win-display-img" src="assets/exit-image.jpg" alt="Winner" />
+      <!-- Top title -->
+      <div id="win-top">
+        <span id="win-title-text">🎉 Happy 10th Monthanniversary! 🎉</span>
+        <span id="win-score-display"></span>
       </div>
-      <div id="win-title-text">🎉 Happy 10th Monthanniversary! 🎉</div>
-      <div id="win-score-display">Score: 0</div>
-      <div id="win-messages">
-        <div class="win-msg-line">Can't beleive it has been 10th months for real.</div>
-        <div class="win-msg-line">You make every ordinary moment feel like magic, bacha.</div>
-        <div class="win-msg-line">I am so lucky that I have you in my life.</div>
-        <div class="win-msg-line">Every laugh we share is a memory I hold close forever.</div>
-        <div class="win-msg-line">You are my peace and home where I just want to be forever.</div>
-        <div class="win-msg-line">Even a silly little makad game can't hold all the love I have for you.</div>
-        <div class="win-msg-line">Cant wait for the day, where I make you wear mangalsutra.</div>
-        <div class="win-msg-line">I am super proud of you bacha and truly you inspire me everyday.</div>
-        <div class="win-msg-line">Watching you makes me fall in love all over again, every single time.</div>
-        <div class="win-msg-line">Here is to forever with you — Happy 10th, my love! 🎊</div>
+
+      <!-- Body: image left, messages right -->
+      <div id="win-body">
+        <!-- Left col -->
+        <div id="win-img-col">
+          <div id="win-img-wrap">
+            <img id="win-display-img" src="assets/exit-image.jpg" alt="Winner" />
+          </div>
+          <button id="play-again-btn">Play Again 🐒</button>
+        </div>
+
+        <!-- Right col: 10 lines -->
+        <div id="win-messages">
+          <div class="win-msg-line">💖 Ten months of you being my favorite person every single day.</div>
+          <div class="win-msg-line">🌸 You make every ordinary moment feel like magic, bacha.</div>
+          <div class="win-msg-line">🍀 I am so lucky that life chose you for me.</div>
+          <div class="win-msg-line">✨ Every laugh we share is a memory I hold close forever.</div>
+          <div class="win-msg-line">🌙 You are my calm on the hardest nights and my joy on the brightest days.</div>
+          <div class="win-msg-line">🐒 Even a silly little makad game can't hold all the love I have for you.</div>
+          <div class="win-msg-line">🎯 Ten months down, a whole beautiful lifetime ahead of us.</div>
+          <div class="win-msg-line">🌺 You are my home, my peace, and my biggest blessing.</div>
+          <div class="win-msg-line">🦋 Watching you makes me fall in love all over again, every single time.</div>
+          <div class="win-msg-line">💛 Here is to forever with you — Happy 10th, my love! 🎊</div>
+        </div>
       </div>
-      <button id="play-again-btn">Play Again 🐒</button>
     </div>
   </div>
 
@@ -242,9 +273,9 @@
 
   // collectible type: [image, points, glowColor]
   const COLLECTIBLE_TYPES = [
-    { img: collectImg1, pts: 100, glow: '#FF6F00' },
+    { img: collectImg1, pts: 20, glow: '#FF6F00' },
     { img: collectImg2, pts: 30, glow: '#7C4DFF' },
-    { img: collectImg3, pts: 5, glow: '#00BCD4' },
+    { img: collectImg3, pts: 50, glow: '#00BCD4' },
   ];
 
   // ============================================================
@@ -562,7 +593,7 @@
 
   function showWin() {
     gameRunning = false;
-    document.getElementById('win-score-display').textContent = '🎊 Score: ' + score;
+    document.getElementById('win-score-display').textContent = '🎊 Final Score: ' + score;
     document.getElementById('win-overlay').classList.add('show');
   }
 
@@ -623,11 +654,11 @@
       if (gameOver) {
         ctx.font="bold 52px 'Fredoka One',cursive";
         ctx.fillStyle='#FF5252'; ctx.shadowColor='#FF5252'; ctx.shadowBlur=20;
-        ctx.fillText('Oopsie Babudi!',W/2,H/2-40); ctx.shadowBlur=0;
+        ctx.fillText('Game Over!',W/2,H/2-40); ctx.shadowBlur=0;
         ctx.font="28px 'Fredoka One',cursive"; ctx.fillStyle='#FFD600';
         ctx.fillText(`Score: ${score}`,W/2,H/2+10);
         ctx.font="22px 'Nunito',sans-serif"; ctx.fillStyle='rgba(255,255,255,0.7)';
-        ctx.fillText('Let this Makad run again',W/2,H/2+50);
+        ctx.fillText('Tap / Space to try again 🐒',W/2,H/2+50);
       } else {
         ctx.font="bold 52px 'Fredoka One',cursive";
         ctx.fillStyle='#FFD600'; ctx.shadowColor='#FFD600'; ctx.shadowBlur=20;
