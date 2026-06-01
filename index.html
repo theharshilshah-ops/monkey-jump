@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monkey Hop!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sky: #87CEEB;
+      --ground: #5D4037;
+      --grass: #4CAF50;
+      --jungle: #2E7D32;
+      --banana: #FFD600;
+      --accent: #FF6F00;
+      --white: #FFFDE7;
+      --shadow: rgba(0,0,0,0.25);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Nunito', sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #game-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.4rem;
+      color: var(--banana);
+      text-shadow: 3px 3px 0 var(--accent), 0 0 30px rgba(255,214,0,0.4);
+      letter-spacing: 2px;
+      animation: titleBob 2s ease-in-out infinite;
+    }
+
+    @keyframes titleBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    #hud {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .hud-item {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      color: var(--white);
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,214,0,0.4);
+      border-radius: 12px;
+      padding: 6px 18px;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .hud-label { font-size: 0.65rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; display: block; }
+
+    #canvas-container {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 3px var(--banana);
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* Settings panel */
+    #settings-btn {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      background: rgba(255,214,0,0.15);
+      border: 2px solid var(--banana);
+      color: var(--banana);
+      border-radius: 10px;
+      padding: 5px 12px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.85rem;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s;
+    }
+    #settings-btn:hover { background: var(--banana); color: #1a1a2e; }
+
+    #settings-panel {
+      display: none;
+      position: absolute;
+      top: 42px;
+      right: 14px;
+      background: #1a1a2e;
+      border: 2px solid var(--banana);
+      border-radius: 14px;
+      padding: 16px;
+      z-index: 20;
+      min-width: 260px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+    #settings-panel.open { display: block; }
+    #settings-panel h3 {
+      font-family: 'Fredoka One', cursive;
+      color: var(--banana);
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+    .setting-row { margin-bottom: 12px; }
+    .setting-row label { display: block; color: var(--white); font-size: 0.8rem; margin-bottom: 4px; opacity: 0.8; }
+    .setting-row input[type=text], .setting-row input[type=url] {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,214,0,0.3);
+      border-radius: 8px;
+      padding: 6px 10px;
+      color: var(--white);
+      font-size: 0.8rem;
+      font-family: 'Nunito', sans-serif;
+    }
+    .setting-row input[type=file] { color: var(--white); font-size: 0.75rem; width: 100%; }
+    .img-preview {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.1);
+      margin-top: 4px;
+      display: none;
+    }
+    .apply-btn {
+      background: var(--banana);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 4px;
+      transition: transform 0.1s;
+    }
+    .apply-btn:hover { transform: scale(1.03); }
+
+    #controls-hint {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    /* Win overlay */
+    #win-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 50;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      border-radius: 20px;
+      animation: fadeIn 0.5s ease;
+    }
+    #win-overlay.show { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+
+    #win-img-wrap {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 4px solid var(--banana);
+      box-shadow: 0 0 40px rgba(255,214,0,0.5);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    #win-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,214,0,0.5); }
+      50% { box-shadow: 0 0 60px rgba(255,214,0,0.9); }
+    }
+
+    #win-text {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      color: var(--white);
+      text-align: center;
+      max-width: 320px;
+      line-height: 1.4;
+      padding: 0 20px;
+    }
+
+    #win-score-display {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5rem;
+      color: var(--banana);
+      text-shadow: 2px 2px 0 var(--accent);
+    }
+
+    #play-again-btn {
+      background: var(--banana);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 36px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(255,214,0,0.4);
+    }
+    #play-again-btn:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(255,214,0,0.6); }
+
+    /* Win image settings */
+    #win-settings {
+      position: absolute;
+      bottom: 10px;
+      left: 14px;
+      background: rgba(255,214,0,0.12);
+      border: 1.5px solid rgba(255,214,0,0.35);
+      color: var(--banana);
+      border-radius: 9px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-family: 'Fredoka One', cursive;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s;
+    }
+    #win-settings:hover { background: rgba(255,214,0,0.25); }
+
+    #win-settings-panel {
+      display: none;
+      position: absolute;
+      bottom: 38px;
+      left: 14px;
+      background: #1a1a2e;
+      border: 2px solid var(--banana);
+      border-radius: 14px;
+      padding: 14px;
+      z-index: 20;
+      min-width: 240px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+    #win-settings-panel.open { display: block; }
+    #win-settings-panel h3 { font-family: 'Fredoka One', cursive; color: var(--banana); margin-bottom: 10px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div id="game-wrapper">
+    <div id="title">🐒 Monkey Hop!</div>
+
+    <div id="hud">
+      <div class="hud-item"><span class="hud-label">Score</span><span id="score-display">0</span></div>
+      <div class="hud-item"><span class="hud-label">High Score</span><span id="hi-display">0</span></div>
+      <div class="hud-item"><span class="hud-label">Speed</span><span id="speed-display">1.0x</span></div>
+    </div>
+
+    <div id="canvas-container">
+      <canvas id="gameCanvas" width="800" height="320"></canvas>
+
+      <!-- Collectible image settings -->
+      <button id="settings-btn">⚙ Collectible</button>
+      <div id="settings-panel">
+        <h3>🍌 Collectible Image</h3>
+        <div class="setting-row">
+          <label>Upload image</label>
+          <input type="file" id="collectible-upload" accept="image/*" />
+          <img id="collectible-preview" class="img-preview" />
+        </div>
+        <div class="setting-row">
+          <label>Or paste image URL</label>
+          <input type="url" id="collectible-url" placeholder="https://..." />
+        </div>
+        <button class="apply-btn" id="apply-collectible">Apply ✓</button>
+      </div>
+
+      <!-- Win screen settings -->
+      <button id="win-settings">🏆 Win Screen</button>
+      <div id="win-settings-panel">
+        <h3>🎉 Win Screen Setup</h3>
+        <div class="setting-row">
+          <label>Upload win image</label>
+          <input type="file" id="win-img-upload" accept="image/*" />
+        </div>
+        <div class="setting-row">
+          <label>Or paste image URL</label>
+          <input type="url" id="win-img-url" placeholder="https://..." />
+        </div>
+        <div class="setting-row">
+          <label>Win message text</label>
+          <input type="text" id="win-msg-text" placeholder="You're a legend! 🎉" value="You're a legend! 🎉" />
+        </div>
+        <button class="apply-btn" id="apply-win">Apply ✓</button>
+      </div>
+
+      <!-- Win overlay -->
+      <div id="win-overlay">
+        <div id="win-img-wrap">
+          <img id="win-display-img" src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=winner" alt="Winner" />
+        </div>
+        <div id="win-score-display">Score: 143</div>
+        <div id="win-text">You're a legend! 🎉</div>
+        <button id="play-again-btn">Play Again 🐒</button>
+      </div>
+    </div>
+
+    <div id="controls-hint">Press SPACE or ↑ to jump • Double jump allowed • Collect packets to score!</div>
+  </div>
+
+  <script>
+    // ============================================================
+    //  ASSETS (SVG-based emoji sprites drawn on canvas)
+    // ============================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // Sky gradient colours
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.65);
+    skyGrad.addColorStop(0, '#0f3443');
+    skyGrad.addColorStop(1, '#2b7a8f');
+
+    // ============================================================
+    //  STATE
+    // ============================================================
+    let score = 0, hiScore = 0, gameRunning = false, gameOver = false;
+    let speed = 4, frame = 0, animFrame = 0;
+    let collectibleImg = null, winImg = null;
+    let winText = "You're a legend! 🎉";
+    let winTriggered = false;
+
+    // Monkey
+    const monkey = {
+      x: 100, y: 0, w: 56, h: 56,
+      vy: 0, jumpCount: 0,
+      isOnGround: true,
+      frame: 0, frameTimer: 0
+    };
+    const GROUND_Y = H - 80;
+    monkey.y = GROUND_Y - monkey.h;
+
+    // Obstacles & collectibles
+    let obstacles = [], collectibles = [], clouds = [], trees = [];
+
+    // Particles
+    let particles = [];
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+    function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+
+    // Draw monkey via emoji + CSS art
+    function drawMonkey(x, y, w, h, jumping) {
+      ctx.save();
+      const cx = x + w / 2, cy = y + h / 2;
+
+      // Shadow
+      ctx.beginPath();
+      ctx.ellipse(cx, GROUND_Y + 6, w * 0.4, 6, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fill();
+
+      // Body
+      ctx.fillStyle = '#8B4513';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 4, w * 0.38, h * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Belly
+      ctx.fillStyle = '#D2691E';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 8, w * 0.22, h * 0.28, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head
+      ctx.fillStyle = '#8B4513';
+      ctx.beginPath();
+      ctx.arc(cx, cy - h * 0.26, w * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Face
+      ctx.fillStyle = '#D2691E';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - h * 0.18, w * 0.22, h * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eyes
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(cx - 7, cy - h * 0.3, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 7, cy - h * 0.3, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#222';
+      ctx.beginPath(); ctx.arc(cx - 6, cy - h * 0.3, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 8, cy - h * 0.3, 2.5, 0, Math.PI * 2); ctx.fill();
+
+      // Ears
+      ctx.fillStyle = '#8B4513';
+      ctx.beginPath(); ctx.arc(cx - w * 0.29, cy - h * 0.28, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + w * 0.29, cy - h * 0.28, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#D2691E';
+      ctx.beginPath(); ctx.arc(cx - w * 0.29, cy - h * 0.28, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + w * 0.29, cy - h * 0.28, 4, 0, Math.PI * 2); ctx.fill();
+
+      // Arms — animate when jumping
+      const armAngle = jumping ? -0.6 : Math.sin(frame * 0.25) * 0.4;
+      ctx.strokeStyle = '#8B4513';
+      ctx.lineWidth = 7;
+      ctx.lineCap = 'round';
+
+      // Left arm
+      ctx.beginPath();
+      ctx.moveTo(cx - w * 0.3, cy);
+      ctx.quadraticCurveTo(cx - w * 0.55, cy + armAngle * 20, cx - w * 0.45, cy + 18);
+      ctx.stroke();
+
+      // Right arm
+      ctx.beginPath();
+      ctx.moveTo(cx + w * 0.3, cy);
+      ctx.quadraticCurveTo(cx + w * 0.55, cy + armAngle * 20, cx + w * 0.45, cy + 18);
+      ctx.stroke();
+
+      // Legs
+      const legOff = jumping ? 10 : Math.sin(frame * 0.3) * 6;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, cy + h * 0.35);
+      ctx.lineTo(cx - 14, cy + h * 0.5 + legOff);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 10, cy + h * 0.35);
+      ctx.lineTo(cx + 14, cy + h * 0.5 - legOff);
+      ctx.stroke();
+
+      // Tail
+      ctx.strokeStyle = '#8B4513';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(cx + w * 0.35, cy + 5);
+      const tailWave = Math.sin(frame * 0.12) * 12;
+      ctx.bezierCurveTo(cx + w * 0.7, cy - 10 + tailWave, cx + w * 0.8, cy + 20 + tailWave, cx + w * 0.55, cy + 30);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Draw obstacle (tree stump / cactus style)
+    function drawObstacle(ob) {
+      ctx.save();
+      const x = ob.x, y = ob.y, w = ob.w, h = ob.h;
+
+      // Trunk
+      const tg = ctx.createLinearGradient(x, y, x + w, y);
+      tg.addColorStop(0, '#3E2723');
+      tg.addColorStop(1, '#5D4037');
+      ctx.fillStyle = tg;
+      ctx.beginPath();
+      ctx.roundRect(x + w * 0.2, y + h * 0.35, w * 0.6, h * 0.65, 4);
+      ctx.fill();
+
+      // Rings
+      ctx.strokeStyle = '#4E342E';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(x + w * 0.5, y + h * 0.45 + i * (h * 0.18), w * 0.25, 4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Foliage blobs
+      const colors = ['#1B5E20', '#2E7D32', '#388E3C', '#43A047'];
+      const blobs = [
+        [0.5, 0.12, 0.52],
+        [0.25, 0.28, 0.38],
+        [0.75, 0.28, 0.38],
+        [0.5, 0.32, 0.42],
+      ];
+      blobs.forEach(([bx, by, br], i) => {
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.beginPath();
+        ctx.arc(x + w * bx, y + h * by, w * br, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    // Draw collectible
+    function drawCollectible(c) {
+      ctx.save();
+      const bob = Math.sin(frame * 0.08 + c.phase) * 4;
+      const cx = c.x + c.w / 2, cy = c.y + c.h / 2 + bob;
+
+      // Glow
+      ctx.shadowColor = '#FFD600';
+      ctx.shadowBlur = 14;
+
+      if (collectibleImg) {
+        ctx.drawImage(collectibleImg, c.x, c.y + bob, c.w, c.h);
+      } else {
+        // Default: draw a cute packet
+        ctx.fillStyle = '#FF6F00';
+        ctx.beginPath();
+        ctx.roundRect(c.x, c.y + bob, c.w, c.h, 8);
+        ctx.fill();
+
+        ctx.fillStyle = '#FFD600';
+        ctx.beginPath();
+        ctx.roundRect(c.x + 4, c.y + bob + 4, c.w - 8, c.h - 8, 5);
+        ctx.fill();
+
+        ctx.fillStyle = '#FF6F00';
+        ctx.font = `bold ${c.w * 0.45}px Fredoka One`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★', cx, cy + bob);
+      }
+      ctx.restore();
+    }
+
+    // Cloud
+    function drawCloud(c) {
+      ctx.save();
+      ctx.fillStyle = `rgba(255,255,255,${c.alpha})`;
+      ctx.shadowColor = 'rgba(255,255,255,0.3)';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+      ctx.arc(c.x + c.r * 0.9, c.y - c.r * 0.2, c.r * 0.75, 0, Math.PI * 2);
+      ctx.arc(c.x - c.r * 0.9, c.y - c.r * 0.1, c.r * 0.65, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Tree background deco
+    function drawBgTree(t) {
+      ctx.save();
+      ctx.globalAlpha = t.alpha;
+      ctx.fillStyle = '#1B5E20';
+      ctx.beginPath();
+      ctx.moveTo(t.x, t.y);
+      ctx.lineTo(t.x - t.w * 0.5, t.y + t.h);
+      ctx.lineTo(t.x + t.w * 0.5, t.y + t.h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#2E7D32';
+      ctx.beginPath();
+      ctx.moveTo(t.x, t.y - t.h * 0.3);
+      ctx.lineTo(t.x - t.w * 0.4, t.y + t.h * 0.5);
+      ctx.lineTo(t.x + t.w * 0.4, t.y + t.h * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#3E2723';
+      ctx.fillRect(t.x - 5, t.y + t.h, 10, t.h * 0.3);
+      ctx.restore();
+    }
+
+    // Particles
+    function spawnParticles(x, y) {
+      for (let i = 0; i < 12; i++) {
+        particles.push({
+          x, y,
+          vx: rand(-4, 4), vy: rand(-6, -1),
+          life: 1, decay: rand(0.03, 0.07),
+          r: rand(4, 10),
+          color: `hsl(${randInt(30, 60)}, 100%, 60%)`
+        });
+      }
+    }
+
+    // ============================================================
+    //  SPAWN
+    // ============================================================
+    let nextObstacle = 120, nextCollectible = 80;
+
+    function spawnObstacle() {
+      const h = randInt(50, 90);
+      const w = randInt(40, 60);
+      obstacles.push({ x: W + 20, y: GROUND_Y - h, w, h });
+      nextObstacle = randInt(Math.max(60, 140 - score * 0.4), Math.max(100, 220 - score * 0.5));
+    }
+
+    function spawnCollectible() {
+      const size = 36;
+      const yOptions = [GROUND_Y - size - 20, GROUND_Y - size - 80, GROUND_Y - size - 140];
+      const y = yOptions[randInt(0, yOptions.length - 1)];
+      collectibles.push({ x: W + 10, y, w: size, h: size, phase: rand(0, Math.PI * 2) });
+      nextCollectible = randInt(60, 140);
+    }
+
+    function initClouds() {
+      for (let i = 0; i < 6; i++) {
+        clouds.push({
+          x: rand(0, W), y: rand(20, 100),
+          r: rand(25, 50), speed: rand(0.3, 0.8), alpha: rand(0.15, 0.35)
+        });
+      }
+    }
+
+    function initBgTrees() {
+      for (let i = 0; i < 8; i++) {
+        trees.push({
+          x: rand(0, W), y: GROUND_Y - rand(60, 130),
+          w: rand(30, 60), h: rand(60, 130),
+          speed: rand(0.5, 1.2), alpha: rand(0.15, 0.3)
+        });
+      }
+    }
+
+    initClouds();
+    initBgTrees();
+
+    // ============================================================
+    //  INPUT
+    // ============================================================
+    const JUMP_FORCE = -13;
+    const MAX_JUMPS = 2;
+
+    function jump() {
+      if (!gameRunning && !gameOver) { startGame(); return; }
+      if (gameOver) return;
+      if (monkey.jumpCount < MAX_JUMPS) {
+        monkey.vy = JUMP_FORCE;
+        monkey.isOnGround = false;
+        monkey.jumpCount++;
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
+    });
+    canvas.addEventListener('click', () => jump());
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, { passive: false });
+
+    // ============================================================
+    //  GAME LOGIC
+    // ============================================================
+    function startGame() {
+      score = 0;
+      speed = 4;
+      frame = 0;
+      gameOver = false;
+      winTriggered = false;
+      monkey.y = GROUND_Y - monkey.h;
+      monkey.vy = 0;
+      monkey.jumpCount = 0;
+      monkey.isOnGround = true;
+      obstacles = [];
+      collectibles = [];
+      particles = [];
+      nextObstacle = 120;
+      nextCollectible = 80;
+      gameRunning = true;
+      document.getElementById('win-overlay').classList.remove('show');
+      updateHUD();
+    }
+
+    function updateHUD() {
+      document.getElementById('score-display').textContent = score;
+      document.getElementById('hi-display').textContent = hiScore;
+      document.getElementById('speed-display').textContent = speed.toFixed(1) + 'x';
+    }
+
+    function update() {
+      if (!gameRunning || gameOver) return;
+      frame++;
+
+      // Speed ramp
+      speed = 4 + score * 0.022;
+      if (speed > 14) speed = 14;
+
+      // Monkey physics
+      monkey.vy += 0.65;
+      monkey.y += monkey.vy;
+      if (monkey.y >= GROUND_Y - monkey.h) {
+        monkey.y = GROUND_Y - monkey.h;
+        monkey.vy = 0;
+        monkey.isOnGround = true;
+        monkey.jumpCount = 0;
+      } else {
+        monkey.isOnGround = false;
+      }
+
+      // Clouds
+      clouds.forEach(c => {
+        c.x -= c.speed * 0.5;
+        if (c.x + c.r * 2 < 0) { c.x = W + c.r; c.y = rand(20, 100); }
+      });
+
+      // BG Trees
+      trees.forEach(t => {
+        t.x -= t.speed;
+        if (t.x + t.w < 0) { t.x = W + t.w; t.y = GROUND_Y - rand(60, 130); t.h = rand(60, 130); t.w = rand(30, 60); }
+      });
+
+      // Spawn obstacles
+      nextObstacle--;
+      if (nextObstacle <= 0) spawnObstacle();
+
+      // Spawn collectibles
+      nextCollectible--;
+      if (nextCollectible <= 0) spawnCollectible();
+
+      // Move obstacles
+      obstacles.forEach(ob => ob.x -= speed);
+      obstacles = obstacles.filter(ob => ob.x + ob.w > -20);
+
+      // Move collectibles
+      collectibles.forEach(c => c.x -= speed * 0.9);
+      collectibles = collectibles.filter(c => c.x + c.w > -20);
+
+      // Particles
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.life -= p.decay;
+      });
+      particles = particles.filter(p => p.life > 0);
+
+      // Collision — obstacles
+      const mx = monkey.x + 8, my = monkey.y + 6, mw = monkey.w - 16, mh = monkey.h - 10;
+      for (const ob of obstacles) {
+        if (mx < ob.x + ob.w * 0.85 && mx + mw > ob.x + ob.w * 0.15 &&
+            my < ob.y + ob.h && my + mh > ob.y) {
+          endGame();
+          return;
+        }
+      }
+
+      // Collision — collectibles
+      for (let i = collectibles.length - 1; i >= 0; i--) {
+        const c = collectibles[i];
+        if (mx < c.x + c.w && mx + mw > c.x && my < c.y + c.h && my + mh > c.y) {
+          spawnParticles(c.x + c.w / 2, c.y + c.h / 2);
+          collectibles.splice(i, 1);
+          score++;
+          if (score > hiScore) hiScore = score;
+          updateHUD();
+
+          if (score >= 143 && !winTriggered) {
+            winTriggered = true;
+            setTimeout(showWin, 400);
+          }
+        }
+      }
+    }
+
+    function endGame() {
+      gameOver = true;
+      gameRunning = false;
+    }
+
+    function showWin() {
+      gameRunning = false;
+      document.getElementById('win-score-display').textContent = 'Score: ' + score;
+      document.getElementById('win-text').textContent = winText;
+      document.getElementById('win-overlay').classList.add('show');
+    }
+
+    // ============================================================
+    //  RENDER
+    // ============================================================
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Sky
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Stars (subtle)
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      for (let i = 0; i < 30; i++) {
+        const sx = ((i * 137 + frame * 0.02) % W);
+        const sy = (i * 73) % (H * 0.55);
+        const sr = 0.5 + (i % 3) * 0.5;
+        ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Clouds
+      clouds.forEach(drawCloud);
+
+      // BG Trees
+      trees.sort((a, b) => a.alpha - b.alpha).forEach(drawBgTree);
+
+      // Ground
+      const gg = ctx.createLinearGradient(0, GROUND_Y, 0, H);
+      gg.addColorStop(0, '#4CAF50');
+      gg.addColorStop(0.12, '#388E3C');
+      gg.addColorStop(0.2, '#5D4037');
+      gg.addColorStop(1, '#3E2723');
+      ctx.fillStyle = gg;
+      ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+
+      // Ground line detail
+      ctx.strokeStyle = '#81C784';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, GROUND_Y);
+      ctx.lineTo(W, GROUND_Y);
+      ctx.stroke();
+
+      // Ground texture dots
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      for (let i = 0; i < 50; i++) {
+        const gx = ((i * 31 + frame * speed * 0.8) % W);
+        ctx.beginPath();
+        ctx.arc(gx, GROUND_Y + 4 + (i % 5) * 3, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Obstacles
+      obstacles.forEach(drawObstacle);
+
+      // Collectibles
+      collectibles.forEach(drawCollectible);
+
+      // Monkey
+      drawMonkey(monkey.x, monkey.y, monkey.w, monkey.h, !monkey.isOnGround);
+
+      // Particles
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Start / Game Over screen
+      if (!gameRunning && !winTriggered) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.font = "bold 52px 'Fredoka One', cursive";
+        ctx.textAlign = 'center';
+
+        if (gameOver) {
+          ctx.fillStyle = '#FF5252';
+          ctx.shadowColor = '#FF5252';
+          ctx.shadowBlur = 20;
+          ctx.fillText('Game Over!', W / 2, H / 2 - 40);
+          ctx.shadowBlur = 0;
+          ctx.font = "28px 'Fredoka One', cursive";
+          ctx.fillStyle = '#FFD600';
+          ctx.fillText(`Score: ${score}`, W / 2, H / 2 + 10);
+          ctx.font = "22px 'Nunito', sans-serif";
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.fillText('Tap / Space to try again 🐒', W / 2, H / 2 + 50);
+        } else {
+          ctx.fillStyle = '#FFD600';
+          ctx.shadowColor = '#FFD600';
+          ctx.shadowBlur = 20;
+          ctx.fillText('Monkey Hop!', W / 2, H / 2 - 30);
+          ctx.shadowBlur = 0;
+          ctx.font = "22px 'Nunito', sans-serif";
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.fillText('Tap or press Space to start 🚀', W / 2, H / 2 + 20);
+          ctx.font = "16px 'Nunito', sans-serif";
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillText('Reach score 143 to unlock a special surprise!', W / 2, H / 2 + 52);
+        }
+      }
+    }
+
+    // ============================================================
+    //  LOOP
+    // ============================================================
+    function loop() {
+      update();
+      render();
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // ============================================================
+    //  UI CONTROLS
+    // ============================================================
+    // Settings toggle
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsPanel = document.getElementById('settings-panel');
+    settingsBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      settingsPanel.classList.toggle('open');
+      winSettingsPanel.classList.remove('open');
+    });
+
+    const winSettingsBtn = document.getElementById('win-settings');
+    const winSettingsPanel = document.getElementById('win-settings-panel');
+    winSettingsBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      winSettingsPanel.classList.toggle('open');
+      settingsPanel.classList.remove('open');
+    });
+
+    document.addEventListener('click', () => {
+      settingsPanel.classList.remove('open');
+      winSettingsPanel.classList.remove('open');
+    });
+    settingsPanel.addEventListener('click', e => e.stopPropagation());
+    winSettingsPanel.addEventListener('click', e => e.stopPropagation());
+
+    // Collectible image upload
+    const collectibleUpload = document.getElementById('collectible-upload');
+    const collectiblePreview = document.getElementById('collectible-preview');
+    const collectibleUrlInput = document.getElementById('collectible-url');
+
+    collectibleUpload.addEventListener('change', () => {
+      const file = collectibleUpload.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        collectiblePreview.src = e.target.result;
+        collectiblePreview.style.display = 'block';
+        collectibleUrlInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('apply-collectible').addEventListener('click', () => {
+      const url = collectibleUrlInput.value.trim();
+      const file = collectibleUpload.files[0];
+
+      if (file && !url) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => { collectibleImg = img; };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else if (url) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => { collectibleImg = img; };
+        img.onerror = () => alert('Could not load image from URL. Try uploading instead.');
+        img.src = url;
+      }
+      settingsPanel.classList.remove('open');
+    });
+
+    // Win screen settings
+    document.getElementById('apply-win').addEventListener('click', () => {
+      const url = document.getElementById('win-img-url').value.trim();
+      const file = document.getElementById('win-img-upload').files[0];
+      const msg = document.getElementById('win-msg-text').value.trim();
+
+      if (msg) {
+        winText = msg;
+        document.getElementById('win-text').textContent = msg;
+      }
+
+      const applyWinImg = (src) => {
+        const imgEl = document.getElementById('win-display-img');
+        imgEl.src = src;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = src;
+        winImg = img;
+      };
+
+      if (file && !url) {
+        const reader = new FileReader();
+        reader.onload = e => applyWinImg(e.target.result);
+        reader.readAsDataURL(file);
+      } else if (url) {
+        applyWinImg(url);
+      }
+
+      winSettingsPanel.classList.remove('open');
+    });
+
+    // Play again
+    document.getElementById('play-again-btn').addEventListener('click', () => {
+      startGame();
+    });
+  </script>
+</body>
+</html>
