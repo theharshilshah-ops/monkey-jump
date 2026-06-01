@@ -507,7 +507,7 @@
   function spawnObstacle() {
     const h = randInt(50,90), w = randInt(40,60);
     obstacles.push({ x: W+20, y: GROUND_Y-h, w, h });
-    nextObstacle = randInt(Math.max(60,140-score*0.4), Math.max(100,220-score*0.5));
+    nextObstacle = randInt(Math.max(90,160-score*0.2), Math.max(140,260-score*0.3));
   }
 
   function spawnCollectible() {
@@ -572,7 +572,7 @@
   function update() {
     if (!gameRunning || gameOver) return;
     frame++;
-    speed = Math.min(14, 4 + score * 0.022);
+    speed = Math.min(10, 4 + score * 0.008);
 
     // physics
     monkey.vy += 0.65; monkey.y += monkey.vy;
@@ -709,7 +709,7 @@
         ctx.font="28px 'Fredoka One',cursive"; ctx.fillStyle='#FFD600';
         ctx.fillText(`Score: ${score}`,W/2,H/2+10);
         ctx.font="22px 'Nunito',sans-serif"; ctx.fillStyle='rgba(255,255,255,0.7)';
-        ctx.fillText('Hoto, ajun ekda try kar, Mi barobar padhnar aata',W/2,H/2+50);
+        ctx.fillText('Ajun ekda try kar, Mi barobar padhnar aata 🐒',W/2,H/2+50);
       } else {
         ctx.font="bold 52px 'Fredoka One',cursive";
         ctx.fillStyle='#FFD600'; ctx.shadowColor='#FFD600'; ctx.shadowBlur=20;
